@@ -1,0 +1,37 @@
+# Full dependency set: ingestion + query + API.
+# Used for the local environment (conda/venv) that runs ingest.py.
+# The API container uses requirements-api.txt, a subset without Docling
+# (heavy, and useless there: ingestion runs on the host).
+
+# ── Document parsing ──────────────────────────────────────────────
+docling>=2.0.0
+
+# ── Vector store client ───────────────────────────────────────────
+qdrant-client>=1.9.0
+
+# ── LangChain core ────────────────────────────────────────────────
+# Base interfaces (Runnable, Document, PromptTemplate, ...)
+langchain-core>=0.3.0
+# High-level modules
+langchain>=1.0.0
+# Legacy features moved out of core in LangChain 1.0
+# (MultiQueryRetriever lives here now)
+langchain-classic>=1.0.0
+
+# ── LangChain integrations ────────────────────────────────────────
+# ChatOllama and OllamaEmbeddings wrappers
+langchain-ollama>=0.2.0
+# QdrantVectorStore wrapper
+langchain-qdrant>=0.2.0
+
+# ── Text splitting ────────────────────────────────────────────────
+langchain-text-splitters>=0.2.0
+
+# ── Web framework ─────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn>=0.30.0
+
+# ── Utilities ─────────────────────────────────────────────────────
+tqdm>=4.66.0
+python-dotenv>=1.0.0
+loguru>=0.7.0

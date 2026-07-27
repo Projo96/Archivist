@@ -1,0 +1,13 @@
+# Dependencies for the API service only (rag-api container).
+# No Docling: ingestion runs on the host, not here.
+qdrant-client>=1.9.0
+langchain-core>=0.3.0
+langchain>=1.0.0
+langchain-classic>=1.0.0
+langchain-ollama>=0.2.0
+langchain-qdrant>=0.2.0
+langchain-text-splitters>=0.2.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-dotenv>=1.0.0
+loguru>=0.7.0

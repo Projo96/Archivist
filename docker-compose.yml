@@ -1,0 +1,84 @@
+# Local stack: Qdrant (vector DB) + RAG API + Open WebUI (chat front-end).
+#
+# Ollama is NOT here: it runs natively on the host (WSL2, macOS or Linux).
+# Reason: direct access to the GPU and to already-downloaded models,
+# without another virtualisation layer in between. Containers reach it
+# through host.docker.internal.
+
+services:
+
+  # ─────────────────────────────────────────────
+  # QDRANT — vector database
+  # ─────────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: archivist-qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"     # REST API + dashboard -> http://localhost:6333/dashboard
+      - "6334:6334"     # gRPC API (faster for the ingestion script)
+    volumes:
+      # Data lives inside the repo but is gitignored: it survives
+      # `docker compose down` and never reaches GitHub.
+      - ./data/qdrant:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    networks:
+      - archivist-net
+
+  # ─────────────────────────────────────────────
+  # RAG API — FastAPI, OpenAI-compatible endpoint
+  # ─────────────────────────────────────────────
+  rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: archivist-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      # These override the .env values, which are written for the host:
+      # inside the Docker network Qdrant is reached by service name and
+      # Ollama through the gateway back to the host.
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+    extra_hosts:
+      # Required on Linux and some Docker Desktop setups: makes
+      # host.docker.internal resolvable.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - qdrant
+    networks:
+      - archivist-net
+
+  # ─────────────────────────────────────────────
+  # OPEN WEBUI — chat interface
+  # Preconfigured to talk to rag-api as an OpenAI
+  # connection (see README, "Connecting Open WebUI")
+  # ─────────────────────────────────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: archivist-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"     # UI -> http://localhost:3000
+    volumes:
+      - ./data/webui:/app/backend/data
+    environment:
+      OPENAI_API_BASE_URL: http://rag-api:8000/v1
+      OPENAI_API_KEY: not-needed
+      WEBUI_TELEMETRY: "false"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - rag-api
+    networks:
+      - archivist-net
+
+networks:
+  archivist-net:
+    driver: bridge
