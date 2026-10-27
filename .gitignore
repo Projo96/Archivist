@@ -1,0 +1,11 @@
+# Documents, Qdrant index, Open WebUI state, Docling inspection output
+data/
+
+# Local configuration (may hold internal paths/hosts)
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
